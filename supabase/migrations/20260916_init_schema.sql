@@ -222,17 +222,20 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Profiles Policies
+DROP POLICY IF EXISTS "Public profiles can be viewed by authenticated users" ON public.profiles;
 CREATE POLICY "Public profiles can be viewed by authenticated users"
     ON public.profiles FOR SELECT
     TO authenticated
     USING (true);
 
+DROP POLICY IF EXISTS "Users can update their own profile or Admin can update any" ON public.profiles;
 CREATE POLICY "Users can update their own profile or Admin can update any"
     ON public.profiles FOR UPDATE
     TO authenticated
     USING (auth.uid() = id OR auth.uid() = auth_user_id OR get_user_role() = 'admin')
     WITH CHECK (auth.uid() = id OR auth.uid() = auth_user_id OR get_user_role() = 'admin');
 
+DROP POLICY IF EXISTS "Admins can insert profiles" ON public.profiles;
 CREATE POLICY "Admins can insert profiles"
     ON public.profiles FOR INSERT
     TO authenticated
@@ -261,11 +264,13 @@ CREATE POLICY "Admins can manage stations"
     );
 
 -- Station Officers Policies
+DROP POLICY IF EXISTS "Station officers viewable by authenticated users" ON public.station_officers;
 CREATE POLICY "Station officers viewable by authenticated users"
     ON public.station_officers FOR SELECT
     TO authenticated
     USING (true);
 
+DROP POLICY IF EXISTS "Admins can manage station officers" ON public.station_officers;
 CREATE POLICY "Admins can manage station officers"
     ON public.station_officers FOR ALL
     TO authenticated
@@ -273,6 +278,7 @@ CREATE POLICY "Admins can manage station officers"
     WITH CHECK (get_user_role() = 'admin');
 
 -- Duty Sessions Policies
+DROP POLICY IF EXISTS "Officers can view their own duty sessions" ON public.duty_sessions;
 CREATE POLICY "Officers can view their own duty sessions"
     ON public.duty_sessions FOR SELECT
     TO authenticated
@@ -286,11 +292,13 @@ CREATE POLICY "Officers can view their own duty sessions"
         )
     );
 
+DROP POLICY IF EXISTS "Officers can insert their own duty session" ON public.duty_sessions;
 CREATE POLICY "Officers can insert their own duty session"
     ON public.duty_sessions FOR INSERT
     TO authenticated
     WITH CHECK (auth.uid() = officer_id);
 
+DROP POLICY IF EXISTS "Officers can update active session or Managers/Admins can update" ON public.duty_sessions;
 CREATE POLICY "Officers can update active session or Managers/Admins can update"
     ON public.duty_sessions FOR UPDATE
     TO authenticated
@@ -305,6 +313,7 @@ CREATE POLICY "Officers can update active session or Managers/Admins can update"
     );
 
 -- Occurrences Policies
+DROP POLICY IF EXISTS "Occurrences viewable by assigned officer, station manager, or admin" ON public.occurrences;
 CREATE POLICY "Occurrences viewable by assigned officer, station manager, or admin"
     ON public.occurrences FOR SELECT
     TO authenticated
@@ -318,12 +327,14 @@ CREATE POLICY "Occurrences viewable by assigned officer, station manager, or adm
         )
     );
 
+DROP POLICY IF EXISTS "Officers can insert occurrences for their active duty session" ON public.occurrences;
 CREATE POLICY "Officers can insert occurrences for their active duty session"
     ON public.occurrences FOR INSERT
     TO authenticated
     WITH CHECK (auth.uid() = officer_id);
 
 -- Evidence Policies
+DROP POLICY IF EXISTS "Evidence viewable by authorized personnel" ON public.occurrence_evidence;
 CREATE POLICY "Evidence viewable by authorized personnel"
     ON public.occurrence_evidence FOR SELECT
     TO authenticated
@@ -342,6 +353,7 @@ CREATE POLICY "Evidence viewable by authorized personnel"
         )
     );
 
+DROP POLICY IF EXISTS "Officers can insert evidence for their occurrences" ON public.occurrence_evidence;
 CREATE POLICY "Officers can insert evidence for their occurrences"
     ON public.occurrence_evidence FOR INSERT
     TO authenticated
@@ -353,6 +365,7 @@ CREATE POLICY "Officers can insert evidence for their occurrences"
     );
 
 -- Duty Reports Policies
+DROP POLICY IF EXISTS "Reports viewable by officer, station manager, or admin" ON public.duty_reports;
 CREATE POLICY "Reports viewable by officer, station manager, or admin"
     ON public.duty_reports FOR SELECT
     TO authenticated
@@ -366,11 +379,13 @@ CREATE POLICY "Reports viewable by officer, station manager, or admin"
         )
     );
 
+DROP POLICY IF EXISTS "Officers can submit their duty report" ON public.duty_reports;
 CREATE POLICY "Officers can submit their duty report"
     ON public.duty_reports FOR INSERT
     TO authenticated
     WITH CHECK (auth.uid() = officer_id);
 
+DROP POLICY IF EXISTS "Managers and Admins can update duty reports" ON public.duty_reports;
 CREATE POLICY "Managers and Admins can update duty reports"
     ON public.duty_reports FOR UPDATE
     TO authenticated
@@ -385,28 +400,33 @@ CREATE POLICY "Managers and Admins can update duty reports"
     );
 
 -- Notifications Policies
+DROP POLICY IF EXISTS "Users can view their own notifications" ON public.notifications;
 CREATE POLICY "Users can view their own notifications"
     ON public.notifications FOR SELECT
     TO authenticated
     USING (recipient_user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Users can update their own notifications (read status)" ON public.notifications;
 CREATE POLICY "Users can update their own notifications (read status)"
     ON public.notifications FOR UPDATE
     TO authenticated
     USING (recipient_user_id = auth.uid())
     WITH CHECK (recipient_user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Authenticated users can create notifications" ON public.notifications;
 CREATE POLICY "Authenticated users can create notifications"
     ON public.notifications FOR INSERT
     TO authenticated
     WITH CHECK (true);
 
 -- Audit Logs Policies
+DROP POLICY IF EXISTS "Admins can view audit logs" ON public.audit_logs;
 CREATE POLICY "Admins can view audit logs"
     ON public.audit_logs FOR SELECT
     TO authenticated
     USING (get_user_role() = 'admin');
 
+DROP POLICY IF EXISTS "Authenticated users can create audit logs" ON public.audit_logs;
 CREATE POLICY "Authenticated users can create audit logs"
     ON public.audit_logs FOR INSERT
     TO authenticated
@@ -420,11 +440,13 @@ VALUES ('occurrence-evidence', 'occurrence-evidence', false)
 ON CONFLICT (id) DO NOTHING;
 
 -- Storage RLS: Allow authenticated uploads and downloads according to role
+DROP POLICY IF EXISTS "Authenticated users can upload evidence" ON storage.objects;
 CREATE POLICY "Authenticated users can upload evidence"
     ON storage.objects FOR INSERT
     TO authenticated
     WITH CHECK (bucket_id = 'occurrence-evidence');
 
+DROP POLICY IF EXISTS "Authenticated users can read evidence" ON storage.objects;
 CREATE POLICY "Authenticated users can read evidence"
     ON storage.objects FOR SELECT
     TO authenticated
