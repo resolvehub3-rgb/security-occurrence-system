@@ -26,6 +26,3 @@ BEGIN
     BEGIN ALTER PUBLICATION supabase_realtime DROP TABLE public.stations; EXCEPTION WHEN OTHERS THEN NULL; END;
     BEGIN ALTER PUBLICATION supabase_realtime DROP TABLE public.profiles; EXCEPTION WHEN OTHERS THEN NULL; END;
 END $$;
-
--- Drop storage bucket policy if exists
-DELETE FROM storage.buckets WHERE id = 'occurrence-evidence';
