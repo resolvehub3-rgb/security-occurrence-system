@@ -164,8 +164,10 @@ export function getSupabase(): SupabaseClient {
 
 /**
  * Save Supabase config to server only (no localStorage)
+ * On deployed environments (Vercel), config is baked in at build time — this is a no-op.
  */
 export async function saveSupabaseConfig(url: string, anonKey: string, serviceRoleKey?: string): Promise<void> {
+  if (!isLocalhost()) return;
   try {
     await fetch('/api/admin/configure-supabase', {
       method: 'POST',
@@ -184,8 +186,10 @@ export async function saveSupabaseConfig(url: string, anonKey: string, serviceRo
 
 /**
  * Reset Supabase config on server (no localStorage)
+ * On deployed environments (Vercel), config is baked in at build time — this is a no-op.
  */
 export async function clearSupabaseConfig(): Promise<void> {
+  if (!isLocalhost()) return;
   try {
     await fetch('/api/admin/configure-supabase', {
       method: 'POST',
@@ -235,7 +239,7 @@ export async function uploadEvidenceFile(
 }
 
 /**
- * Test Supabase connection via the server proxy
+ * Test Supabase connection — uses proxy on localhost, direct on deployed
  */
 export async function testSupabaseConnection(url?: string, key?: string): Promise<{ success: boolean; message: string }> {
   try {
@@ -253,8 +257,11 @@ export async function testSupabaseConnection(url?: string, key?: string): Promis
       };
     }
 
-    // Test via server proxy so browser doesn't need direct Supabase access
-    const res = await fetch(`/api/supabase-proxy/rest/v1/profiles?select=id&limit=1`, {
+    const testApiUrl = isLocalhost()
+      ? `/api/supabase-proxy/rest/v1/profiles?select=id&limit=1`
+      : `${testUrl.replace(/\/+$/, '')}/rest/v1/profiles?select=id&limit=1`;
+
+    const res = await fetch(testApiUrl, {
       headers: {
         apikey: testKey,
         Authorization: `Bearer ${testKey}`,
@@ -262,7 +269,7 @@ export async function testSupabaseConnection(url?: string, key?: string): Promis
     });
 
     if (res.ok) {
-      return { success: true, message: 'Connected to Supabase successfully via server proxy!' };
+      return { success: true, message: 'Connected to Supabase successfully!' };
     }
 
     const body = await res.text();

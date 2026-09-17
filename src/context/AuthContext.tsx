@@ -196,11 +196,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const config = getSupabaseConfig();
       if (!config.isConfigured) {
+        const isDeployed = typeof window !== 'undefined' && window.location.hostname !== 'localhost';
         return {
           success: false,
-          error:
-            config.configError ||
-            'Supabase credentials are not configured. Please set your Supabase URL & Anon Key in the Setup configuration.',
+          error: isDeployed
+            ? 'Supabase credentials are not configured in this deployment. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables in your Vercel dashboard, then redeploy.'
+            : config.configError ||
+              'Supabase credentials are not configured. Please set your Supabase URL & Anon Key in the Setup configuration.',
         };
       }
 
