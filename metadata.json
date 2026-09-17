@@ -1,0 +1,6 @@
+{
+  "name": "Security Occurrence Management System",
+  "description": "Real-time security occurrence management platform for security officers, station managers, and administrators.",
+  "requestFramePermissions": ["microphone", "camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
