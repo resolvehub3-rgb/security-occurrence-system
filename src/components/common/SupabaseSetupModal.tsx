@@ -8,6 +8,12 @@ import {
 } from '../../lib/supabase';
 import { Database, Check, Copy, RefreshCw, AlertTriangle, ShieldCheck, X, ExternalLink } from 'lucide-react';
 
+function isDeployed(): boolean {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname;
+  return host !== 'localhost' && host !== '127.0.0.1' && host !== '0.0.0.0';
+}
+
 const SQL_MIGRATION_PREVIEW = `-- 1. Run in Supabase SQL Editor:
 -- Extends Supabase auth.users with operational roles & metadata
 CREATE TABLE IF NOT EXISTS public.profiles (
@@ -246,6 +252,17 @@ export const SupabaseSetupModal: React.FC<SupabaseSetupModalProps> = ({ isOpen, 
         <div className="p-6">
           {activeTab === 'credentials' ? (
             <div className="space-y-4">
+              {isDeployed() && (
+                <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-xl text-xs text-amber-900 leading-relaxed">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <strong>Deployed Environment:</strong> The "Save & Connect" button does not work on deployed builds (Vercel, Netlify, etc.). Environment variables are baked in at build time. To configure Supabase, set <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> in your hosting dashboard, then <strong>redeploy</strong>.
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="p-3 bg-orange-50/80 border border-orange-200/80 rounded-xl text-xs text-orange-900 leading-relaxed">
                 <div className="flex items-start gap-2">
                   <ShieldCheck className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
@@ -314,7 +331,8 @@ export const SupabaseSetupModal: React.FC<SupabaseSetupModalProps> = ({ isOpen, 
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="px-3.5 py-2 text-xs font-medium text-stone-500 hover:text-stone-800 transition"
+                  disabled={isDeployed()}
+                  className="px-3.5 py-2 text-xs font-medium text-stone-500 hover:text-stone-800 transition disabled:opacity-50"
                 >
                   Clear Overrides
                 </button>
@@ -331,11 +349,12 @@ export const SupabaseSetupModal: React.FC<SupabaseSetupModalProps> = ({ isOpen, 
                   <button
                     type="button"
                     onClick={handleSave}
-                    disabled={!url || !anonKey || isAppSelfUrl(url)}
+                    disabled={!url || !anonKey || isAppSelfUrl(url) || isDeployed()}
                     className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-xl bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50 transition shadow-sm"
+                    title={isDeployed() ? 'Set env vars in hosting dashboard, then redeploy' : ''}
                   >
                     <Check className="w-4 h-4" />
-                    <span>Save & Connect</span>
+                    <span>{isDeployed() ? 'Set in Dashboard' : 'Save & Connect'}</span>
                   </button>
                 </div>
               </div>

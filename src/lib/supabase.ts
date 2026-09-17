@@ -53,6 +53,15 @@ export function getSupabaseConfig(): {
     !isAppSelfUrl(url)
   );
 
+  if (typeof window !== 'undefined') {
+    console.log('[SOMS] Supabase Config:', {
+      urlSet: Boolean(url),
+      keySet: Boolean(anonKey),
+      isConfigured,
+      envUrl: url ? url.substring(0, 30) + '...' : '(empty)',
+    });
+  }
+
   return { url, anonKey, serviceRoleKey, isConfigured };
 }
 
