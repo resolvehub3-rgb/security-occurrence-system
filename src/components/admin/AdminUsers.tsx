@@ -602,7 +602,7 @@ export const AdminUsers: React.FC = () => {
           if (signInRes.data?.user) {
             targetUserId = signInRes.data.user.id;
           } else {
-            targetUserId = `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+            throw new Error('User exists but credentials are invalid. Cannot create profile without a valid auth user.');
           }
         } else {
           throw new Error(signUpErr.message || 'Failed to provision credentials');
@@ -612,7 +612,7 @@ export const AdminUsers: React.FC = () => {
       }
 
       if (!targetUserId) {
-        targetUserId = `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        throw new Error('Failed to obtain user ID from Supabase Auth. Profile cannot be created.');
       }
 
       // Save directly to Supabase (realtime, no local cache)
@@ -645,17 +645,13 @@ export const AdminUsers: React.FC = () => {
           }
         } else if (activeTab === 'officer') {
           try {
-            const assignRes = await fetch('/api/admin/assign-station-officers', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                stationId: selectedStationId,
-                officerIds: [targetUserId],
-              }),
-            });
-            if (!assignRes.ok) {
-              const assignData = await assignRes.json();
-              throw new Error(assignData.error || 'Station officer assignment failed');
+            const { error: assignErr } = await supabase.from('station_officers').upsert({
+              station_id: selectedStationId,
+              officer_id: targetUserId,
+              active: true,
+            }, { onConflict: 'station_id,officer_id' });
+            if (assignErr) {
+              throw new Error('Station officer assignment failed: ' + assignErr.message);
             }
           } catch (assignErr: any) {
             console.error('Station officer assignment error:', assignErr);

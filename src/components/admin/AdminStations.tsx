@@ -498,18 +498,28 @@ export const AdminStations: React.FC = () => {
     setSavingAssignments(true);
 
     try {
-      const res = await fetch('/api/admin/assign-station-officers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          stationId: assignModalStation.id,
-          officerIds: stationOfficerIds,
-        }),
-      });
+      const supabase = getSupabase();
+      const stationId = assignModalStation.id;
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to save assignments');
+      // Deactivate all current officers for this station
+      await supabase
+        .from('station_officers')
+        .update({ active: false })
+        .eq('station_id', stationId);
+
+      // Activate selected officers
+      if (stationOfficerIds.length > 0) {
+        const upserts = stationOfficerIds.map((officerId) =>
+          supabase.from('station_officers').upsert(
+            { station_id: stationId, officer_id: officerId, active: true },
+            { onConflict: 'station_id,officer_id' }
+          )
+        );
+        const results = await Promise.all(upserts);
+        const firstError = results.find((r) => r.error);
+        if (firstError?.error) {
+          throw new Error(firstError.error.message || 'Failed to save assignments');
+        }
       }
 
       setAssignModalStation(null);
