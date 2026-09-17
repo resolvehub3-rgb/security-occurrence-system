@@ -75,6 +75,12 @@ let clientInstance: SupabaseClient | null = null;
 let currentUrl: string = '';
 let currentKey: string = '';
 
+function isLocalhost(): boolean {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname;
+  return host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0';
+}
+
 export function getSupabase(): SupabaseClient {
   const config = getSupabaseConfig();
 
@@ -102,38 +108,55 @@ export function getSupabase(): SupabaseClient {
     const supabaseUrl = config.url;
     const supabaseAnonKey = config.anonKey;
 
-    // ALWAYS route through server proxy — browser never talks to Supabase directly
-    const proxyFetch: typeof fetch = async (input, init) => {
-      const originalUrl = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-      const rewritten = proxyUrl(supabaseUrl, originalUrl);
+    // Only route through server proxy on localhost (Express server is running)
+    // On deployed environments (Vercel, etc.), talk directly to Supabase
+    if (isLocalhost()) {
+      const proxyFetch: typeof fetch = async (input, init) => {
+        const originalUrl = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+        const rewritten = proxyUrl(supabaseUrl, originalUrl);
 
-      const newInit = { ...init };
-      const newHeaders = new Headers(init?.headers);
-      newHeaders.set('apikey', supabaseAnonKey);
-      if (!newHeaders.has('Authorization')) {
-        newHeaders.set('Authorization', `Bearer ${supabaseAnonKey}`);
-      }
-      newInit.headers = newHeaders;
+        const newInit = { ...init };
+        const newHeaders = new Headers(init?.headers);
+        newHeaders.set('apikey', supabaseAnonKey);
+        if (!newHeaders.has('Authorization')) {
+          newHeaders.set('Authorization', `Bearer ${supabaseAnonKey}`);
+        }
+        newInit.headers = newHeaders;
 
-      return fetch(rewritten, newInit);
-    };
+        return fetch(rewritten, newInit);
+      };
 
-    clientInstance = createClient(config.url, config.anonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        fetch: proxyFetch,
-      },
-      global: {
-        fetch: proxyFetch,
-      },
-      realtime: {
-        params: {
-          eventsPerSecond: 10,
+      clientInstance = createClient(config.url, config.anonKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          fetch: proxyFetch,
         },
-      },
-    });
+        global: {
+          fetch: proxyFetch,
+        },
+        realtime: {
+          params: {
+            eventsPerSecond: 10,
+          },
+        },
+      });
+    } else {
+      // Production: talk directly to Supabase
+      clientInstance = createClient(config.url, config.anonKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+        },
+        realtime: {
+          params: {
+            eventsPerSecond: 10,
+          },
+        },
+      });
+    }
   }
 
   return clientInstance;
