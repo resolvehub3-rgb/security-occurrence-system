@@ -438,26 +438,26 @@ DO $$
 BEGIN
     BEGIN
         ALTER PUBLICATION supabase_realtime ADD TABLE public.duty_sessions;
-    EXCEPTION WHEN duplicate_object THEN NULL;
+    EXCEPTION WHEN OTHERS THEN NULL;
     END;
     BEGIN
         ALTER PUBLICATION supabase_realtime ADD TABLE public.occurrences;
-    EXCEPTION WHEN duplicate_object THEN NULL;
+    EXCEPTION WHEN OTHERS THEN NULL;
     END;
     BEGIN
         ALTER PUBLICATION supabase_realtime ADD TABLE public.duty_reports;
-    EXCEPTION WHEN duplicate_object THEN NULL;
+    EXCEPTION WHEN OTHERS THEN NULL;
     END;
     BEGIN
         ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
-    EXCEPTION WHEN duplicate_object THEN NULL;
+    EXCEPTION WHEN OTHERS THEN NULL;
     END;
     BEGIN
         ALTER PUBLICATION supabase_realtime ADD TABLE public.stations;
-    EXCEPTION WHEN duplicate_object THEN NULL;
+    EXCEPTION WHEN OTHERS THEN NULL;
     END;
     BEGIN
         ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles;
-    EXCEPTION WHEN duplicate_object THEN NULL;
+    EXCEPTION WHEN OTHERS THEN NULL;
     END;
 END $$;
