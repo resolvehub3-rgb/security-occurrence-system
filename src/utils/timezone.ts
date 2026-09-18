@@ -118,22 +118,14 @@ export function formatSecondsCountdown(totalSeconds: number): string {
 }
 
 /**
- * Get current Ghana time components
+ * Get current Ghana time components (Ghana is UTC+0, no DST)
  */
 export function getGhanaNow(): { hours: number; minutes: number; seconds: number; totalMinutes: number } {
   const now = new Date();
-  const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone: GHANA_TIMEZONE,
-    hour: 'numeric',
-    minute: 'numeric',
-    second: 'numeric',
-    hour12: false,
-  }).formatToParts(now);
-
-  const hours = parseInt(parts.find((p) => p.type === 'hour')?.value || '0', 10);
-  const minutes = parseInt(parts.find((p) => p.type === 'minute')?.value || '0', 10);
-  const seconds = parseInt(parts.find((p) => p.type === 'second')?.value || '0', 10);
-
+  // Ghana is UTC+0 — directly use UTC values
+  const hours = now.getUTCHours();
+  const minutes = now.getUTCMinutes();
+  const seconds = now.getUTCSeconds();
   return { hours, minutes, seconds, totalMinutes: hours * 60 + minutes };
 }
 
