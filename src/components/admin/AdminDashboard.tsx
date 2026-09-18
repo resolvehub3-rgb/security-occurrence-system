@@ -56,9 +56,12 @@ export const AdminDashboard: React.FC<{ onNavigateTab?: (tab: string) => void }>
         if (result.ok && result.data) {
           metricsData = result.data as typeof metricsData;
         }
-      } catch (apiErr) {
-        console.warn('Server API unavailable for dashboard stats, using fallback:', apiErr);
-        // Fallback: direct Supabase client queries
+      } catch {
+        // Server API unavailable — will use direct Supabase fallback below
+      }
+
+      // If server API failed or returned nothing, fetch directly from Supabase
+      if (metricsData.totalStations === 0 && metricsData.totalOccurrences === 0) {
         const [
           { count: occCount },
           { count: stnCount },
