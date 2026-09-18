@@ -436,10 +436,10 @@ CREATE POLICY "Authenticated users can create audit logs"
 -- STORAGE BUCKET SETUP (Run in Supabase SQL editor or Storage)
 -- ==========================================================
 INSERT INTO storage.buckets (id, name, public)
-VALUES ('occurrence-evidence', 'occurrence-evidence', false)
-ON CONFLICT (id) DO NOTHING;
+VALUES ('occurrence-evidence', 'occurrence-evidence', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
 
--- Storage RLS: Allow authenticated uploads and downloads according to role
+-- Storage RLS: Allow authenticated uploads and public reads for evidence
 DROP POLICY IF EXISTS "Authenticated users can upload evidence" ON storage.objects;
 CREATE POLICY "Authenticated users can upload evidence"
     ON storage.objects FOR INSERT
@@ -450,6 +450,12 @@ DROP POLICY IF EXISTS "Authenticated users can read evidence" ON storage.objects
 CREATE POLICY "Authenticated users can read evidence"
     ON storage.objects FOR SELECT
     TO authenticated
+    USING (bucket_id = 'occurrence-evidence');
+
+DROP POLICY IF EXISTS "Public can read evidence" ON storage.objects;
+CREATE POLICY "Public can read evidence"
+    ON storage.objects FOR SELECT
+    TO public
     USING (bucket_id = 'occurrence-evidence');
 
 -- ==========================================================
