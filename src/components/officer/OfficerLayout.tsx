@@ -75,16 +75,16 @@ export const OfficerLayout: React.FC = () => {
               <span className="text-xs font-semibold uppercase tracking-wider">{accessStatus.message}</span>
             </div>
 
-            {/* Duty window hours: 7:30 AM – 5:00 PM */}
+            {/* Duty window hours: 5:00 PM – 7:30 AM */}
             <div className="flex items-center justify-center gap-6 text-xs">
               <div className="text-center">
                 <div className="text-stone-400 font-medium mb-0.5">Opens</div>
-                <div className="font-bold text-stone-900 text-sm">7:30 AM</div>
+                <div className="font-bold text-stone-900 text-sm">5:00 PM</div>
               </div>
               <div className="w-px h-8 bg-stone-200" />
               <div className="text-center">
                 <div className="text-stone-400 font-medium mb-0.5">Closes</div>
-                <div className="font-bold text-stone-900 text-sm">5:00 PM</div>
+                <div className="font-bold text-stone-900 text-sm">7:30 AM</div>
               </div>
             </div>
 

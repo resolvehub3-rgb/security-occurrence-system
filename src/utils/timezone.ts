@@ -130,7 +130,7 @@ export function getGhanaNow(): { hours: number; minutes: number; seconds: number
 }
 
 /**
- * Officer duty window: 7:30 AM – 5:00 PM Ghana time
+ * Officer duty window: 5:00 PM – 7:30 AM Ghana time (overnight)
  * Returns { allowed, nextChange, message }
  */
 export function getOfficerAccessStatus(): {
@@ -139,34 +139,36 @@ export function getOfficerAccessStatus(): {
   message: string;
 } {
   const gh = getGhanaNow();
-  const START_MINUTES = 7 * 60 + 30; // 7:30 AM = 450
-  const END_MINUTES = 17 * 60; // 5:00 PM = 1020
+  const OPEN_MINUTES = 17 * 60; // 5:00 PM = 1020
+  const CLOSE_MINUTES = 7 * 60 + 30; // 7:30 AM = 450
 
-  if (gh.totalMinutes >= START_MINUTES && gh.totalMinutes < END_MINUTES) {
-    // Within allowed window — calculate time until 5:00 PM
-    const endMinutesLeft = END_MINUTES - gh.totalMinutes;
-    const nextChangeSeconds = endMinutesLeft * 60 - gh.seconds;
+  const isWithinWindow = gh.totalMinutes >= OPEN_MINUTES || gh.totalMinutes < CLOSE_MINUTES;
+
+  if (isWithinWindow) {
+    // Within allowed window — calculate time until 7:30 AM
+    let minutesUntilClose: number;
+    if (gh.totalMinutes >= OPEN_MINUTES) {
+      // After 5:00 PM — time until 7:30 AM tomorrow
+      minutesUntilClose = (24 * 60 - gh.totalMinutes) + CLOSE_MINUTES;
+    } else {
+      // Before 7:30 AM — time until 7:30 AM today
+      minutesUntilClose = CLOSE_MINUTES - gh.totalMinutes;
+    }
+    const nextChangeSeconds = minutesUntilClose * 60 - gh.seconds;
     return {
       allowed: true,
       nextChangeSeconds,
-      message: `Duty window open. Access closes at 5:00 PM.`,
+      message: `Duty window open. Access closes at 7:30 AM.`,
     };
   }
 
-  // Outside window — calculate time until 7:30 AM
-  let minutesUntilStart: number;
-  if (gh.totalMinutes < START_MINUTES) {
-    // Before 7:30 AM today
-    minutesUntilStart = START_MINUTES - gh.totalMinutes;
-  } else {
-    // After 5:00 PM — time until 7:30 AM tomorrow
-    minutesUntilStart = 24 * 60 - gh.totalMinutes + START_MINUTES;
-  }
-  const nextChangeSeconds = minutesUntilStart * 60 - gh.seconds;
+  // Outside window — calculate time until 5:00 PM
+  const minutesUntilOpen = OPEN_MINUTES - gh.totalMinutes;
+  const nextChangeSeconds = minutesUntilOpen * 60 - gh.seconds;
 
   return {
     allowed: false,
     nextChangeSeconds,
-    message: `Duty window closed. Access opens at 7:30 AM.`,
+    message: `Duty window closed. Access opens at 5:00 PM.`,
   };
 }
