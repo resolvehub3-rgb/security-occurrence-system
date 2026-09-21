@@ -542,38 +542,46 @@ export const AdminStations: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-stone-900 tracking-tight">Security Station Directory</h1>
-          <p className="text-xs text-stone-500">Configure operational sites, assign managers, and deploy officers</p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search station or code..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-3 py-2 text-xs rounded-xl border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 w-48 sm:w-60"
-            />
+    <div className="space-y-6">
+      <div className="relative overflow-hidden bg-gradient-to-r from-stone-900 via-stone-900 to-stone-950 rounded-3xl p-6 shadow-2xl shadow-stone-950/30">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Security Station Directory</h1>
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-400 text-[10px] font-bold uppercase tracking-wider">
+                <Building className="w-3 h-3" />
+                {stations.length} Stations
+              </span>
+            </div>
+            <p className="text-sm text-stone-400">Configure operational sites, assign managers, and deploy officers</p>
           </div>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search station or code..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-3 py-2 text-xs rounded-xl border border-white/10 bg-white/10 text-white placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-orange-500 w-48 sm:w-60"
+              />
+            </div>
 
-          <button
-            id="create-station-btn"
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-orange-600 hover:bg-orange-700 text-white shadow-sm transition flex-shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create Station</span>
-          </button>
+            <button
+              id="create-station-btn"
+              onClick={openCreateModal}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-orange-600 hover:bg-orange-700 text-white shadow-sm transition flex-shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Station</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {loading ? (
-        <div className="py-20 text-center">
+        <div className="py-20 text-center bg-gradient-to-br from-stone-50 to-white rounded-3xl border border-stone-200/60">
           <div className="w-8 h-8 border-3 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
           <p className="text-xs text-stone-400">Loading stations…</p>
         </div>
@@ -586,15 +594,15 @@ export const AdminStations: React.FC = () => {
           onAction={openCreateModal}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredStations.map((stn) => (
             <div
               key={stn.id}
-              className="p-5 bg-white rounded-3xl border border-stone-200/90 shadow-2xs space-y-4 hover:border-stone-300 transition"
+              className="p-5 bg-white/80 backdrop-blur-sm rounded-3xl border border-stone-200/80 shadow-sm space-y-4 hover:shadow-md hover:border-blue-200 transition-all duration-200 animate-fade-in-up"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-stone-100 text-stone-800 flex items-center justify-center font-bold text-base">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center">
                     <Building className="w-6 h-6 text-orange-600" />
                   </div>
                   <div>
@@ -617,7 +625,7 @@ export const AdminStations: React.FC = () => {
                 </button>
               </div>
 
-              <div className="p-3.5 bg-stone-50 rounded-2xl border border-stone-200/60 space-y-2 text-xs text-stone-600">
+              <div className="p-3.5 bg-stone-50/80 rounded-2xl border border-stone-200/50 space-y-2 text-xs text-stone-600">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-3.5 h-3.5 text-orange-600 flex-shrink-0" />
                   <span>{stn.location}</span>

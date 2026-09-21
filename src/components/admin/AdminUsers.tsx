@@ -719,37 +719,46 @@ export const AdminUsers: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-stone-900 tracking-tight">Personnel Directory & Credentials</h1>
-          <p className="text-xs text-stone-500">Secure credential provisioning and real-time badge management</p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder={`Search ${activeTab}s by name or badge...`}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-3 py-2 text-xs rounded-xl border border-stone-200 bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 w-52 sm:w-64"
-            />
+    <div className="space-y-6">
+      <div className="relative overflow-hidden bg-gradient-to-r from-stone-900 via-stone-900 to-stone-950 rounded-3xl p-6 shadow-2xl shadow-stone-950/30">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-violet-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Personnel Directory & Credentials</h1>
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/15 border border-violet-500/30 text-violet-400 text-[10px] font-bold uppercase tracking-wider">
+                <Users className="w-3 h-3" />
+                {users.length} Personnel
+              </span>
+            </div>
+            <p className="text-sm text-stone-400">Secure credential provisioning and real-time badge management</p>
           </div>
 
-          <button
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-orange-600 hover:bg-orange-700 text-white shadow-sm transition flex-shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add {activeTab === 'officer' ? 'Officer' : 'Manager'}</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="w-4 h-4 text-stone-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder={`Search ${activeTab}s by name or badge...`}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-3 py-2 text-xs rounded-xl border border-white/10 bg-white/10 text-white placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-orange-500 w-52 sm:w-64"
+              />
+            </div>
+
+            <button
+              onClick={openCreateModal}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-orange-600 hover:bg-orange-700 text-white shadow-sm transition flex-shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add {activeTab === 'officer' ? 'Officer' : 'Manager'}</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Role Toggle Tabs */}
-      <div className="flex gap-2 border-b border-stone-200 pb-2">
+      <div className="flex gap-2">
         <button
           onClick={() => setActiveTab('officer')}
           className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
@@ -792,7 +801,7 @@ export const AdminUsers: React.FC = () => {
       )}
 
       {loading ? (
-        <div className="py-20 text-center">
+        <div className="py-20 text-center bg-gradient-to-br from-stone-50 to-white rounded-3xl border border-stone-200/60">
           <div className="w-8 h-8 border-3 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
           <p className="text-xs text-stone-400">Loading personnel records…</p>
         </div>
@@ -811,12 +820,12 @@ export const AdminUsers: React.FC = () => {
             return (
               <div
                 key={u.id}
-                className="p-5 bg-white rounded-3xl border border-stone-200/90 shadow-2xs space-y-3.5 hover:border-stone-300 transition flex flex-col justify-between"
+                className="p-5 bg-white/80 backdrop-blur-sm rounded-3xl border border-stone-200/80 shadow-sm space-y-3.5 hover:shadow-md hover:border-violet-200 transition-all duration-200 animate-fade-in-up flex flex-col justify-between"
               >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-orange-600 text-white flex items-center justify-center font-bold text-base shadow-sm shadow-orange-600/20">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-violet-700 text-white flex items-center justify-center font-bold text-base shadow-sm shadow-violet-600/20">
                         {u.full_name?.charAt(0) || 'U'}
                       </div>
                       <div>
