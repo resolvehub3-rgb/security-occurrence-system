@@ -2,8 +2,22 @@
 
 @theme {
   --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  @keyframes sidebar-glow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  @keyframes slide-in-left {
+    from { transform: translateX(-100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
 }
 
 html {
   font-family: "Montserrat", sans-serif;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.25s ease-out;
 }

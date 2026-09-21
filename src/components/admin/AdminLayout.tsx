@@ -167,39 +167,39 @@ export const AdminLayout: React.FC = () => {
     switch (id) {
       case 'dashboard':
         return (
-          <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             Live
           </span>
         );
       case 'stations':
         return (
-          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 border border-stone-200/80">
+          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-stone-800 text-stone-300 border border-stone-700">
             {sidebarCounts.stations}
           </span>
         );
       case 'users':
         return (
-          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 border border-stone-200/80">
+          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-stone-800 text-stone-300 border border-stone-700">
             {sidebarCounts.personnel}
           </span>
         );
       case 'occurrences':
         return (
-          <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 border border-orange-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-orange-600 animate-pulse" />
+          <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-orange-500/15 text-orange-400 border border-orange-500/30">
+            <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
             {sidebarCounts.occurrences}
           </span>
         );
       case 'reports':
         return (
-          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 border border-stone-200/80">
+          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-stone-800 text-stone-300 border border-stone-700">
             {sidebarCounts.reports}
           </span>
         );
       case 'audit':
         return (
-          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 border border-stone-200/80">
+          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-stone-800 text-stone-300 border border-stone-700">
             {sidebarCounts.auditLogs > 999 ? '999+' : sidebarCounts.auditLogs}
           </span>
         );
@@ -221,23 +221,27 @@ export const AdminLayout: React.FC = () => {
               setActiveTab(item.id);
               if (onItemClick) onItemClick();
             }}
-            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-xs transition-all ${
+            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left text-xs transition-all duration-200 ${
               isActive
-                ? 'bg-orange-500/10 text-orange-950 font-bold border-l-4 border-orange-600 shadow-xs'
-                : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100/80 border-l-4 border-transparent'
+                ? 'bg-orange-500/15 text-orange-100 shadow-[inset_3px_0_0_theme(colors.orange.500)]'
+                : 'text-stone-400 hover:text-stone-200 hover:bg-white/5'
             }`}
           >
             <div className="flex items-center gap-3 min-w-0">
               <div
-                className={`p-1.5 rounded-lg flex-shrink-0 transition-colors ${
-                  isActive ? 'bg-orange-600 text-white' : 'bg-stone-100 text-stone-600'
+                className={`p-1.5 rounded-lg flex-shrink-0 transition-all duration-200 ${
+                  isActive
+                    ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/25'
+                    : 'bg-stone-800 text-stone-500 group-hover:text-stone-300'
                 }`}
               >
                 <Icon className="w-4 h-4" />
               </div>
               <div className="truncate">
-                <div className="font-semibold text-stone-900 leading-tight truncate">{item.label}</div>
-                <div className="text-[10px] text-stone-400 font-normal leading-tight truncate">
+                <div className={`font-semibold leading-tight truncate ${isActive ? 'text-orange-100' : 'text-stone-300'}`}>
+                  {item.label}
+                </div>
+                <div className={`text-[10px] leading-tight truncate ${isActive ? 'text-stone-400' : 'text-stone-600'}`}>
                   {item.description}
                 </div>
               </div>
@@ -285,17 +289,17 @@ export const AdminLayout: React.FC = () => {
             className="fixed inset-0 bg-stone-900/60 backdrop-blur-xs transition-opacity"
             onClick={() => setMobileMenuOpen(false)}
           />
-          <div className="relative w-4/5 max-w-xs bg-white h-full shadow-2xl flex flex-col p-4 z-10 animate-fade-in">
-            <div className="flex items-center justify-between pb-4 border-b border-stone-100 mb-3">
+          <div className="relative w-4/5 max-w-xs bg-gradient-to-b from-stone-900 via-stone-900 to-stone-950 h-full shadow-2xl flex flex-col p-4 z-10 animate-slide-in-left">
+            <div className="flex items-center justify-between pb-4 border-b border-stone-800/60 mb-3">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-orange-600" />
-                <span className="text-xs font-bold uppercase tracking-wider text-stone-900">
+                <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+                <span className="text-xs font-bold uppercase tracking-wider text-stone-300">
                   Command Navigation
                 </span>
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-500"
+                className="p-1.5 rounded-lg hover:bg-white/10 text-stone-400 hover:text-white transition"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -304,23 +308,25 @@ export const AdminLayout: React.FC = () => {
             <div className="flex-1 overflow-y-auto">{renderNavList(() => setMobileMenuOpen(false))}</div>
 
             {/* Mobile Footer Status */}
-            <div className="pt-4 border-t border-stone-100 mt-2">
-              <div className="flex items-center justify-between text-[11px] text-stone-500 mb-2">
-                <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
-                  <Radio className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
-                  <span>Real-Time Sync Active</span>
+            <div className="pt-4 border-t border-stone-800/50 mt-2">
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-stone-700/50 p-3">
+                <div className="flex items-center justify-between text-[11px] text-stone-400 mb-2">
+                  <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                    <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                    <span>Real-Time Sync Active</span>
+                  </div>
+                  <button
+                    onClick={handleManualRefresh}
+                    disabled={isRefreshing}
+                    className="p-1 rounded hover:bg-white/10 text-stone-500 hover:text-white transition"
+                    title="Manual refresh"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-orange-400' : ''}`} />
+                  </button>
                 </div>
-                <button
-                  onClick={handleManualRefresh}
-                  disabled={isRefreshing}
-                  className="p-1 rounded hover:bg-stone-100 text-stone-600"
-                  title="Manual refresh"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-                </button>
-              </div>
-              <div className="text-[10px] text-stone-400">
-                Last sync: {lastSyncTime.toLocaleTimeString()}
+                <div className="text-[10px] text-stone-600 font-mono">
+                  Last sync: {lastSyncTime.toLocaleTimeString()}
+                </div>
               </div>
             </div>
           </div>
@@ -331,51 +337,58 @@ export const AdminLayout: React.FC = () => {
       <aside
         id="admin-persistent-sidebar"
         aria-label="Security Administration Navigation"
-        className="hidden md:flex w-64 lg:w-72 flex-shrink-0 bg-white border-r border-stone-200/90 flex-col justify-between self-start sticky top-16 h-[calc(100vh-4rem)] overflow-hidden z-20 shadow-xs"
+        className="hidden md:flex w-64 lg:w-72 flex-shrink-0 bg-gradient-to-b from-stone-900 via-stone-900 to-stone-950 border-r border-stone-800/50 flex-col justify-between self-start sticky top-16 h-[calc(100vh-4rem)] overflow-hidden z-20 shadow-2xl shadow-stone-950/30"
       >
         {/* Sidebar Header */}
-        <div className="p-4 border-b border-stone-100">
+        <div className="p-4 border-b border-stone-800/60">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-stone-500">
               Admin Navigation
             </span>
-            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               Real-Time
             </div>
           </div>
-          <div className="text-xs font-bold text-stone-900 tracking-tight">Security Command Console</div>
+          <div className="text-xs font-bold text-white tracking-tight">Security Command Console</div>
         </div>
 
         {/* Sidebar Navigation Items */}
         <div className="flex-1 overflow-y-auto p-3 space-y-1">{renderNavList()}</div>
 
         {/* Sidebar Real-Time Status Card */}
-        <div className="p-3 border-t border-stone-100 bg-stone-50/70">
-          <div className="bg-white rounded-xl border border-stone-200/80 p-3 shadow-2xs">
+        <div className="p-3 border-t border-stone-800/50">
+          <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-stone-700/50 p-3">
             <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-800">
-                <Radio className="w-3.5 h-3.5 text-emerald-600 animate-pulse flex-shrink-0" />
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-300">
+                <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse flex-shrink-0" />
                 <span>Live Supabase Stream</span>
               </div>
               <button
                 id="admin-sidebar-refresh-btn"
                 onClick={handleManualRefresh}
                 disabled={isRefreshing}
-                className="p-1 rounded-md text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition"
+                className="p-1 rounded-md text-stone-500 hover:text-white hover:bg-white/10 transition"
                 title="Force refresh counts"
               >
-                <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin text-orange-600' : ''}`} />
+                <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin text-orange-400' : ''}`} />
               </button>
             </div>
 
             <div className="flex items-center justify-between text-[10px] text-stone-500">
               <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3 text-stone-400" />
+                <Clock className="w-3 h-3 text-stone-600" />
                 Synced:
               </span>
-              <span className="font-mono text-stone-700">{lastSyncTime.toLocaleTimeString()}</span>
+              <span className="font-mono text-stone-400">{lastSyncTime.toLocaleTimeString()}</span>
             </div>
+          </div>
+        </div>
+
+        {/* Sidebar Branding */}
+        <div className="px-4 py-3 border-t border-stone-800/50">
+          <div className="text-[10px] text-stone-600 font-semibold tracking-wide text-center">
+            SECURITY <span className="text-orange-500/70">OMS</span>
           </div>
         </div>
       </aside>
