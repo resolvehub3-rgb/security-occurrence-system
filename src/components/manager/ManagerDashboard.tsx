@@ -258,7 +258,7 @@ export const ManagerDashboard: React.FC = () => {
             <Clock className="w-4 h-4 text-orange-600" />
           </div>
           <div className="text-2xl font-black text-stone-900">{activeSessions.length}</div>
-          <div className="text-[11px] text-stone-500 font-medium mt-1">6:00 PM → 6:00 AM shift</div>
+          <div className="text-[11px] text-stone-500 font-medium mt-1">6:00 PM → 7:30 AM shift</div>
         </div>
 
         {/* Metric 3: Pending Reports for Review */}

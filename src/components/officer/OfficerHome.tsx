@@ -11,6 +11,8 @@ import {
   formatSecondsCountdown,
   calculateRemainingSeconds,
   calculateDutyEndTime,
+  isPastSubmissionGrace,
+  SUBMISSION_GRACE_MINUTES,
 } from '../../utils/timezone';
 import {
   ShieldAlert,
@@ -61,6 +63,10 @@ export const OfficerHome: React.FC = () => {
   // File input ref
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Session the officer has already acknowledged via "Start New Shift" — used so
+  // the DUTY CLOSED confirmation cannot re-appear and block a new shift.
+  const dismissedSessionIdRef = useRef<string | null>(null);
+
   // Fetch active duty session from Supabase
   const fetchActiveDutySession = useCallback(async () => {
     if (!user) return;
@@ -87,7 +93,41 @@ export const OfficerHome: React.FC = () => {
       }
 
       if (data) {
-        setActiveSession(data as DutySession);
+        const session = data as DutySession;
+
+        // Officer already acknowledged this closed shift — show REPORT ON DUTY
+        if (session.id === dismissedSessionIdRef.current) {
+          setActiveSession(null);
+          setSessionOccurrences([]);
+          return;
+        }
+
+        // A shift can only be closed while its duty period (plus the short
+        // 7:30 AM – 8:00 AM submission grace) is still running. Anything older
+        // belongs to a previous shift: an abandoned 'active' row is cleaned up
+        // and the officer is sent back to "REPORT ON DUTY" instead of being
+        // offered a final report that can no longer be submitted.
+        const dutyPeriodOver = isPastSubmissionGrace(session.expected_end_at);
+        const canStillBeClosed = session.status === 'returned' || !dutyPeriodOver;
+
+        if (!canStillBeClosed) {
+          if (session.status === 'active') {
+            const { error: closeError } = await supabase
+              .from('duty_sessions')
+              .update({ status: 'ended', updated_at: new Date().toISOString() })
+              .eq('id', session.id)
+              .eq('status', 'active');
+            if (closeError) console.warn('Failed to close expired duty session:', closeError);
+          }
+          setActiveSession(null);
+          setSessionOccurrences([]);
+          return;
+        }
+
+        setActiveSession(session);
+        // Seed the countdown immediately so the shift-ended banner never flashes
+        setRemainingSeconds(calculateRemainingSeconds(session.expected_end_at));
+
         // Fetch occurrences for this session
         const { data: occData } = await supabase
           .from('occurrences')
@@ -95,7 +135,7 @@ export const OfficerHome: React.FC = () => {
             *,
             evidence:occurrence_evidence(*)
           `)
-          .eq('duty_session_id', data.id)
+          .eq('duty_session_id', session.id)
           .order('occurrence_time', { ascending: true });
 
         setSessionOccurrences((occData as Occurrence[]) || []);
@@ -253,7 +293,22 @@ export const OfficerHome: React.FC = () => {
     try {
       const supabase = getSupabase();
       const now = new Date();
+      // Fixed schedule: duty always ends at the next 7:30 AM Ghana time,
+      // regardless of when the officer actually reports on duty.
       const expectedEnd = calculateDutyEndTime(now);
+
+      // Abandon any previous shift that is past its submission grace so the
+      // officer always starts from a clean state.
+      const { error: cleanupError } = await supabase
+        .from('duty_sessions')
+        .update({ status: 'ended', updated_at: now.toISOString() })
+        .eq('officer_id', user.id)
+        .eq('status', 'active')
+        .lt(
+          'expected_end_at',
+          new Date(now.getTime() - SUBMISSION_GRACE_MINUTES * 60 * 1000).toISOString()
+        );
+      if (cleanupError) console.warn('Failed to close expired duty session:', cleanupError);
 
       const { data: newSession, error } = await supabase
         .from('duty_sessions')
@@ -278,6 +333,7 @@ export const OfficerHome: React.FC = () => {
       }
 
       setActiveSession(newSession as DutySession);
+      setRemainingSeconds(calculateRemainingSeconds(expectedEnd));
       setSessionOccurrences([]);
       setJustClosedDuty(false);
     } catch (err: any) {
@@ -493,6 +549,7 @@ export const OfficerHome: React.FC = () => {
 
           <button
             onClick={() => {
+              dismissedSessionIdRef.current = activeSession?.id ?? null;
               setJustClosedDuty(false);
               fetchActiveDutySession();
             }}
@@ -534,7 +591,7 @@ export const OfficerHome: React.FC = () => {
 
               <div className="flex items-center gap-2 pt-2 border-t border-stone-200/50 text-xs text-stone-600">
                 <Clock className="w-3.5 h-3.5 text-stone-400" />
-                <span>Standard Shift: <strong>6:00 PM → 6:00 AM</strong> (12 Hours)</span>
+                <span>Standard Shift: <strong>6:00 PM → 7:30 AM</strong></span>
               </div>
             </div>
           ) : (
@@ -566,7 +623,7 @@ export const OfficerHome: React.FC = () => {
               <span>REPORT ON DUTY</span>
             </button>
             <p className="text-[11px] text-center text-stone-400 mt-2">
-              Records authoritative Ghana server timestamp & starts 12-hour duty countdown.
+              Records authoritative Ghana server timestamp &amp; counts down to the fixed 7:30 AM shift end.
             </p>
           </div>
         </div>
@@ -610,7 +667,7 @@ export const OfficerHome: React.FC = () => {
           </div>
           <div className="text-xs text-stone-500 mt-1 flex items-center justify-center gap-1.5">
             <Clock className="w-3 h-3 text-stone-400" />
-            <span>Shift End: <strong>{formatGhanaShortTime(activeSession.expected_end_at)}</strong> (12h)</span>
+            <span>Shift End: <strong>{formatGhanaShortTime(activeSession.expected_end_at)}</strong></span>
           </div>
         </div>
 
@@ -626,7 +683,7 @@ export const OfficerHome: React.FC = () => {
         </div>
       </div>
 
-      {/* SHIFT ENDED BANNER / FINAL REPORT PROMPT */}
+      {/* SHIFT ENDED BANNER / FINAL REPORT PROMPT — only once the shift time is actually over */}
       {isShiftEnded && (
         <div className="p-4 rounded-2xl bg-amber-500 text-white shadow-md shadow-amber-500/20 space-y-3">
           <div className="flex items-center gap-2 font-bold text-sm">
@@ -634,7 +691,8 @@ export const OfficerHome: React.FC = () => {
             <span>Duty Period Ended — Ready for Final Report</span>
           </div>
           <p className="text-xs text-amber-50 leading-relaxed">
-            Your 12-hour operational duty period has concluded. Please review your logged occurrences and submit the final report to your Station Manager.
+            Your duty period has concluded. Please review your logged occurrences and submit the final report to your Station Manager.
+            Portal access for submission closes at <strong>8:00 AM</strong>.
           </p>
           <button
             id="review-final-report-btn"
@@ -787,14 +845,6 @@ export const OfficerHome: React.FC = () => {
           <h3 className="text-xs font-bold uppercase tracking-wider text-stone-500">
             Shift Logbook ({sessionOccurrences.length})
           </h3>
-          {!isShiftEnded && sessionOccurrences.length > 0 && (
-            <button
-              onClick={() => setShowFinalSummaryModal(true)}
-              className="text-xs font-semibold text-orange-600 hover:text-orange-700"
-            >
-              Ready to Close?
-            </button>
-          )}
         </div>
 
         {sessionOccurrences.length === 0 ? (

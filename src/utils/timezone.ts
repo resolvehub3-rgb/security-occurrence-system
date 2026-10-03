@@ -85,12 +85,76 @@ export function formatGhanaDate(dateInput: string | Date | null | undefined): st
   }
 }
 
+/** Official duty period ends at 7:30 AM Ghana time (UTC+0) */
+export const DUTY_END_HOUR = 7;
+export const DUTY_END_MINUTE = 30;
+
 /**
- * Calculate expected 12-hour duty end time (started_at + 12 hours)
+ * Officers keep access for this many minutes after the duty period ends so they
+ * can submit the final report (7:30 AM → 8:00 AM).
  */
-export function calculateDutyEndTime(startedAt: string | Date): Date {
-  const start = typeof startedAt === 'string' ? new Date(startedAt) : new Date(startedAt);
-  return new Date(start.getTime() + 12 * 60 * 60 * 1000);
+export const SUBMISSION_GRACE_MINUTES = 30;
+
+/**
+ * Calculate the fixed end of the duty period — the next 7:30 AM Ghana time.
+ *
+ * The countdown is anchored to the official schedule, NOT to the moment the
+ * officer clicks "Report On Duty". An officer reporting late at 6:30 PM still
+ * sees the time left until 7:30 AM (13:00:00), not 12 hours from his click.
+ *
+ * Ghana (Africa/Accra) is UTC+0, so UTC arithmetic equals Ghana local time.
+ */
+export function calculateDutyEndTime(reference: string | Date = new Date()): Date {
+  const ref = typeof reference === 'string' ? new Date(reference) : new Date(reference);
+  const refTime = ref.getTime();
+  const now = isNaN(refTime) ? new Date() : ref;
+
+  const end = new Date(
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      DUTY_END_HOUR,
+      DUTY_END_MINUTE,
+      0,
+      0
+    )
+  );
+
+  // Reference time already past today's 7:30 AM → duty ends tomorrow at 7:30 AM
+  if (end.getTime() <= now.getTime()) {
+    end.setUTCDate(end.getUTCDate() + 1);
+  }
+
+  return end;
+}
+
+/**
+ * True once the duty period AND its submission grace window have both passed,
+ * i.e. the session can no longer be closed and a new shift should be reported.
+ */
+export function isPastSubmissionGrace(
+  expectedEndAt: string | Date | null | undefined,
+  now: Date = new Date()
+): boolean {
+  if (!expectedEndAt) return false;
+  const end =
+    typeof expectedEndAt === 'string'
+      ? new Date(expectedEndAt).getTime()
+      : expectedEndAt.getTime();
+  if (isNaN(end)) return false;
+  return now.getTime() > end + SUBMISSION_GRACE_MINUTES * 60 * 1000;
+}
+
+/**
+ * True while officers are inside the post-shift submission grace period
+ * (7:30 AM – 8:00 AM Ghana time) — the only time outside the normal duty
+ * window when an officer with a just-ended shift may still access the portal.
+ */
+export function isSubmissionGraceWindow(): boolean {
+  const gh = getGhanaNow();
+  const closeMinutes = DUTY_END_HOUR * 60 + DUTY_END_MINUTE; // 7:30 AM
+  return gh.totalMinutes >= closeMinutes && gh.totalMinutes < closeMinutes + SUBMISSION_GRACE_MINUTES;
 }
 
 /**
@@ -132,8 +196,14 @@ export function getGhanaNow(): { hours: number; minutes: number; seconds: number
 /**
  * Officer duty window: 5:00 PM – 7:30 AM Ghana time (overnight)
  * Returns { allowed, nextChange, message }
+ *
+ * @param options.withinSubmissionGrace Set by OfficerLayout when the officer has
+ *   a duty session that just ended and is still inside the 7:30 AM – 8:00 AM
+ *   submission grace window. Grants access only so the final report can be closed.
  */
-export function getOfficerAccessStatus(): {
+export function getOfficerAccessStatus(options?: {
+  withinSubmissionGrace?: boolean;
+}): {
   allowed: boolean;
   nextChangeSeconds: number;
   message: string;
@@ -160,6 +230,20 @@ export function getOfficerAccessStatus(): {
       nextChangeSeconds,
       message: `Duty window open. Access closes at 7:30 AM.`,
     };
+  }
+
+  // Outside the duty window — a short grace period (7:30 AM – 8:00 AM) is granted
+  // to officers whose shift just ended so they can submit the final report.
+  if (options?.withinSubmissionGrace) {
+    const graceCloseMinutes = CLOSE_MINUTES + SUBMISSION_GRACE_MINUTES; // 8:00 AM
+    if (gh.totalMinutes < graceCloseMinutes) {
+      const nextChangeSeconds = (graceCloseMinutes - gh.totalMinutes) * 60 - gh.seconds;
+      return {
+        allowed: true,
+        nextChangeSeconds: nextChangeSeconds > 0 ? nextChangeSeconds : 0,
+        message: `Duty window closed. Final report pending — access open until 8:00 AM.`,
+      };
+    }
   }
 
   // Outside window — calculate time until 5:00 PM

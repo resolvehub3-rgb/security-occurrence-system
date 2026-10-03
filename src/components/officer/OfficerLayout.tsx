@@ -1,49 +1,82 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { getSupabase } from '../../lib/supabase';
 import { OfficerHome } from './OfficerHome';
 import { OfficerHistory } from './OfficerHistory';
 import { OfficerProfile } from './OfficerProfile';
-import { getOfficerAccessStatus, formatSecondsCountdown } from '../../utils/timezone';
+import {
+  getOfficerAccessStatus,
+  formatSecondsCountdown,
+  isSubmissionGraceWindow,
+  SUBMISSION_GRACE_MINUTES,
+} from '../../utils/timezone';
 import { Home, History, User, ShieldAlert, Clock, Lock } from 'lucide-react';
 
 type OfficerTab = 'home' | 'history' | 'profile';
 
 export const OfficerLayout: React.FC = () => {
+  const { user } = useAuth();
   const [currentTab, setCurrentTab] = useState<OfficerTab>('home');
   const [accessStatus, setAccessStatus] = useState(() => getOfficerAccessStatus());
   const [countdown, setCountdown] = useState(accessStatus.nextChangeSeconds);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Outside the duty window (7:30 AM – 8:00 AM only), an officer whose shift has
+  // just ended keeps access long enough to submit the final report.
+  const hasShiftEndingInGrace = useCallback(async (): Promise<boolean> => {
+    if (!user || !isSubmissionGraceWindow()) return false;
+    try {
+      const supabase = getSupabase();
+      const now = Date.now();
+      const { data, error } = await supabase
+        .from('duty_sessions')
+        .select('id')
+        .eq('officer_id', user.id)
+        .gte('expected_end_at', new Date(now - SUBMISSION_GRACE_MINUTES * 60 * 1000).toISOString())
+        .lte('expected_end_at', new Date(now).toISOString())
+        .limit(1)
+        .maybeSingle();
+      if (error) {
+        console.error('Grace period check failed:', error);
+        return false;
+      }
+      return !!data;
+    } catch (err) {
+      console.error('Grace period check failed:', err);
+      return false;
+    }
+  }, [user]);
+
   // Full status refresh — re-evaluates allowed/blocked and resets countdown
-  const refreshAccess = () => {
-    const status = getOfficerAccessStatus();
+  const refreshAccess = useCallback(async () => {
+    const base = getOfficerAccessStatus();
+    const withinSubmissionGrace = base.allowed ? false : await hasShiftEndingInGrace();
+    const status = getOfficerAccessStatus({ withinSubmissionGrace });
     setAccessStatus(status);
     setCountdown(status.nextChangeSeconds);
-  };
+  }, [hasShiftEndingInGrace]);
 
-  // Real-time: tick every second, full refresh every 10 seconds and when countdown hits 0
+  // Real-time: tick every second, full refresh every 30 seconds and when countdown hits 0
   useEffect(() => {
     refreshAccess();
 
     tickRef.current = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          // Re-check access status (window may have opened/closed)
-          const status = getOfficerAccessStatus();
-          setAccessStatus(status);
-          return status.nextChangeSeconds;
-        }
-        return prev - 1;
-      });
+      setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
 
     // Safety net: full refresh every 30 seconds to catch any edge cases
-    const safetyNet = setInterval(refreshAccess, 30000);
+    const safetyNet = setInterval(() => refreshAccess(), 30000);
 
     return () => {
       if (tickRef.current) clearInterval(tickRef.current);
       clearInterval(safetyNet);
     };
-  }, []);
+  }, [refreshAccess]);
+
+  // Window status may have changed (opened / closed / grace expired) at zero
+  useEffect(() => {
+    if (countdown === 0) refreshAccess();
+  }, [countdown, refreshAccess]);
 
   // If outside duty window, show restricted access screen
   if (!accessStatus.allowed) {
